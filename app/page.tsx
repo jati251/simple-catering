@@ -59,10 +59,10 @@ export default function Home() {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest border border-primary/20">
               Deni MBG - Dapur Kesayangan Anak MSID
             </div>
-            <h1 className="text-6xl md:text-8xl font-black tracking-tight leading-none italic">
+            <h1 className="text-4xl md:text-8xl font-black tracking-tight leading-none italic">
                 {t.heroTitle}
             </h1>
-            <p className="text-lg text-muted-foreground max-w-xl mx-auto font-medium">
+            <p className="text-sm md:text-lg text-muted-foreground max-w-xl mx-auto font-medium px-4">
                 {t.heroSub}
             </p>
         </motion.div>
@@ -115,7 +115,7 @@ export default function Home() {
                   key={`menu-${activeMenu.id}`}
                   initial={{ opacity: 0, x: -30 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="glass p-10 rounded-[3rem] space-y-8 flex flex-col justify-center relative overflow-hidden group"
+                  className="glass p-6 md:p-10 rounded-[2.5rem] md:rounded-[3rem] space-y-6 md:space-y-8 flex flex-col justify-center relative overflow-hidden group"
               >
                   {activeMenu.expand?.menu_item?.image && (
                     <div className="absolute inset-0 opacity-10 blur-2xl grayscale group-hover:opacity-20 transition-opacity">
@@ -155,7 +155,7 @@ export default function Home() {
                   key={`prep-${activeMenu.id}`}
                   initial={{ opacity: 0, x: 30 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="glass p-10 rounded-[3rem] space-y-8 flex flex-col border-dashed border-white/10"
+                  className="glass p-6 md:p-10 rounded-[2.5rem] md:rounded-[3rem] space-y-6 md:space-y-8 flex flex-col border-dashed border-white/10"
               >
                   <div className="flex items-center justify-between">
                       <h2 className="text-xl font-bold flex items-center gap-2">

@@ -122,43 +122,45 @@ export default function CalendarConfig() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-7 gap-3">
-                        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
-                            <div key={day} className="text-center text-[10px] font-black uppercase text-muted-foreground mb-2">{day}</div>
-                        ))}
-                        {calendarDays.map((day, idx) => (
-                            <motion.button
-                                key={idx}
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: idx * 0.01 }}
-                                onClick={() => setSelectedDateStr(day.dateStr)}
-                                className={`h-24 rounded-2xl p-2 flex flex-col justify-between border transition-all text-left relative group ${
-                                    day.isSelected ? 'border-primary ring-2 ring-primary/20 bg-primary/5' : 'border-white/5 bg-white/3 hover:bg-white/5 hover:border-white/10'
-                                } ${day.isToday ? 'bg-primary/5' : ''}`}
-                            >
-                                <span className={`text-xs font-black ${day.isToday ? 'text-primary underline' : 'text-muted-foreground'}`}>
-                                    {day.date.getDate()}
-                                </span>
-                                
-                                {day.assignments.length > 0 ? (
-                                    <div className="space-y-1 animate-in fade-in slide-in-from-bottom-2 duration-300 overflow-hidden">
-                                        <div className="flex flex-wrap gap-1">
-                                          {day.assignments.map(a => (
-                                            <div key={a.id} className="w-full h-1 bg-primary rounded-full shadow-sm shadow-primary/40" />
-                                          ))}
-                                        </div>
-                                        <div className="text-[8px] font-black uppercase tracking-tighter text-primary truncate leading-tight">
-                                            {day.assignments.length} Items Selected
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="text-[8px] font-bold text-muted-foreground/30 opacity-0 group-hover:opacity-100 transition-opacity">Empty</div>
-                                )}
-                                
-                                {day.isSelected && <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-primary" />}
-                            </motion.button>
-                        ))}
+                    <div className="overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
+                      <div className="grid grid-cols-7 gap-2 sm:gap-3 min-w-[600px] md:min-w-0">
+                          {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                              <div key={day} className="text-center text-[10px] font-black uppercase text-muted-foreground mb-2">{day}</div>
+                          ))}
+                          {calendarDays.map((day, idx) => (
+                              <motion.button
+                                  key={idx}
+                                  initial={{ opacity: 0, scale: 0.9 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  transition={{ delay: idx * 0.01 }}
+                                  onClick={() => setSelectedDateStr(day.dateStr)}
+                                  className={`h-20 sm:h-24 rounded-xl sm:rounded-2xl p-1 sm:p-2 flex flex-col justify-between border transition-all text-left relative group ${
+                                      day.isSelected ? 'border-primary ring-2 ring-primary/20 bg-primary/5' : 'border-white/5 bg-white/3 hover:bg-white/5 hover:border-white/10'
+                                  } ${day.isToday ? 'bg-primary/5' : ''}`}
+                              >
+                                  <span className={`text-[10px] sm:text-xs font-black ${day.isToday ? 'text-primary underline' : 'text-muted-foreground'}`}>
+                                      {day.date.getDate()}
+                                  </span>
+                                  
+                                  {day.assignments.length > 0 ? (
+                                      <div className="space-y-1 animate-in fade-in slide-in-from-bottom-2 duration-300 overflow-hidden">
+                                          <div className="flex flex-wrap gap-0.5 sm:gap-1">
+                                            {day.assignments.map(a => (
+                                              <div key={a.id} className="w-full h-0.5 sm:h-1 bg-primary rounded-full shadow-sm shadow-primary/40" />
+                                            ))}
+                                          </div>
+                                          <div className="text-[7px] sm:text-[8px] font-black uppercase tracking-tighter text-primary truncate leading-tight">
+                                              {day.assignments.length} Items
+                                          </div>
+                                      </div>
+                                  ) : (
+                                      <div className="text-[8px] font-bold text-muted-foreground/30 opacity-0 group-hover:opacity-100 transition-opacity">Empty</div>
+                                  )}
+                                  
+                                  {day.isSelected && <div className="absolute top-1 right-1 w-1 sm:w-1.5 h-1 sm:h-1.5 rounded-full bg-primary" />}
+                              </motion.button>
+                          ))}
+                      </div>
                     </div>
                 </div>
             </div>
