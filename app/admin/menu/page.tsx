@@ -1,29 +1,41 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { pb, getMenuItems, addMenuItem, deleteMenuItem } from '@/lib/pb';
+import React, { useEffect, useState, useRef } from 'react';
+import { pb, getMenuItems, addMenuItem, deleteMenuItem, getImageUrl } from '@/lib/pb';
 import { MenuItem } from '@/types/pocketbase';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, ChevronLeft, Utensils, Info, Tag } from 'lucide-react';
+import { Plus, Trash2, ChevronLeft, Utensils, Info, Tag, Image as ImageIcon, Upload, Loader2, ChefHat } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslation, formatIDR } from '@/lib/utils';
 
 export default function MenuManagement() {
+  const { t } = useTranslation();
   const router = useRouter();
+  
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Form State
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function fetchMenu() {
     setLoading(true);
     try {
       const items = await getMenuItems();
       setMenuItems(items);
-    } catch (err) {}
-    setLoading(false);
+    } catch (err) {
+      console.error("Failed to fetch menu:", err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -34,131 +46,233 @@ export default function MenuManagement() {
     fetchMenu();
   }, [router]);
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     setAdding(true);
+    
+    // PocketBase requires FormData for file uploads
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('description', description);
+    formData.append('price', price);
+    if (imageFile) {
+        formData.append('image', imageFile);
+    }
+
     try {
-      await addMenuItem({ name, description, price: parseFloat(price) || 0 });
+      await addMenuItem(formData);
+      // Reset form
       setName('');
       setDescription('');
       setPrice('');
-      fetchMenu();
-    } catch (err) {}
-    setAdding(false);
+      setImageFile(null);
+      setImagePreview(null);
+      await fetchMenu(); // Refresh list
+    } catch (err) {
+      console.error("Failed to add item:", err);
+    } finally {
+      setAdding(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this item?')) return;
+    if (!confirm(t.deleteConfirm)) return;
     try {
       await deleteMenuItem(id);
-      fetchMenu();
-    } catch (err) {}
+      await fetchMenu();
+    } catch (err) {
+      console.error("Delete failed:", err);
+    }
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-12">
-        <div className="flex items-center gap-4 mb-8">
-            <Link href="/admin/dashboard" className="p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors">
+    <div className="max-w-6xl mx-auto px-6 py-12">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-12">
+            <Link href="/admin/dashboard" className="p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-all">
                 <ChevronLeft size={24} />
             </Link>
-            <h1 className="text-3xl font-bold">Menu <span className="text-orange-500">Management</span></h1>
+            <div>
+              <h1 className="text-4xl font-black italic tracking-tighter leading-none">D'MBG</h1>
+              <p className="text-xs font-bold text-primary uppercase tracking-widest mt-1">{t.manageMenu}</p>
+            </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Add Form */}
-            <div className="lg:col-span-1">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+            {/* LEFT: Add Form */}
+            <div className="lg:col-span-5 xl:col-span-4">
                 <motion.div 
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="glass p-8 rounded-3xl sticky top-24"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="glass p-8 rounded-[2.5rem] sticky top-24 border border-white/5 shadow-2xl"
                 >
-                    <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-                        <Plus className="text-orange-500" /> Add New Item
-                    </h2>
-                    <form onSubmit={handleAdd} className="space-y-4">
-                        <div className="space-y-1">
-                            <label className="text-xs font-bold text-muted-foreground ml-1">Name</label>
-                            <div className="relative">
-                                <Utensils className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                    <div className="flex items-center gap-3 mb-8">
+                      <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+                        <Plus size={20} />
+                      </div>
+                      <h2 className="text-2xl font-black italic">{t.addNew}</h2>
+                    </div>
+
+                    <form onSubmit={handleAdd} className="space-y-6">
+                        {/* Name Input */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">{t.foodName}</label>
+                            <div className="relative group">
+                                <Utensils className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={16} />
                                 <input 
-                                    type="text" required placeholder="Nasi Goreng Special"
-                                    className="w-full h-12 bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 focus:ring-2 focus:ring-orange-500/50 outline-none"
+                                    type="text" required placeholder="e.g. Nasi Bakar D'MBG"
+                                    className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl pl-10 pr-4 focus:ring-2 focus:ring-primary/50 outline-none font-bold text-sm transition-all"
                                     value={name} onChange={(e) => setName(e.target.value)}
                                 />
                             </div>
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-xs font-bold text-muted-foreground ml-1">Description</label>
-                            <div className="relative">
-                                <Info className="absolute left-4 top-4 text-muted-foreground" size={16} />
-                                <textarea 
-                                    placeholder="Brief description..."
-                                    className="w-full h-32 bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-orange-500/50 outline-none resize-none"
-                                    value={description} onChange={(e) => setDescription(e.target.value)}
+
+                        {/* Image Drag & Drop / Upload */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">{t.uploadImage}</label>
+                            <div 
+                                onClick={() => fileInputRef.current?.click()}
+                                className="relative h-40 w-full rounded-2xl border-2 border-dashed border-white/10 bg-white/5 hover:bg-white/10 hover:border-primary/30 transition-all cursor-pointer flex flex-col items-center justify-center overflow-hidden group"
+                            >
+                                {imagePreview ? (
+                                    <>
+                                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <Upload className="text-white" size={32} />
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                        <ImageIcon size={32} strokeWidth={1.5} />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-center">{t.clickBrowse}</span>
+                                    </div>
+                                )}
+                                <input 
+                                    type="file" 
+                                    ref={fileInputRef}
+                                    onChange={handleImageChange}
+                                    className="hidden" 
+                                    accept="image/*"
                                 />
                             </div>
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-xs font-bold text-muted-foreground ml-1">Price (optional)</label>
-                            <div className="relative">
-                                <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+
+                        {/* Price Input */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">{t.price} (IDR)</label>
+                            <div className="relative group">
+                                <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={16} />
                                 <input 
-                                    type="number" placeholder="50.00"
-                                    className="w-full h-12 bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 focus:ring-2 focus:ring-orange-500/50 outline-none"
+                                    type="number" required placeholder="25000"
+                                    className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl pl-10 pr-4 focus:ring-2 focus:ring-primary/50 outline-none font-black italic tracking-wider text-sm transition-all"
                                     value={price} onChange={(e) => setPrice(e.target.value)}
                                 />
                             </div>
                         </div>
+
+                        {/* Description */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">{t.description}</label>
+                            <div className="relative group">
+                                <Info className="absolute left-4 top-4 text-muted-foreground group-focus-within:text-primary transition-colors" size={16} />
+                                <textarea 
+                                    placeholder="Brief details about this dish..."
+                                    className="w-full h-28 bg-white/5 border border-white/10 rounded-2xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-primary/50 outline-none resize-none font-medium text-xs transition-all"
+                                    value={description} onChange={(e) => setDescription(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
                         <button 
                             disabled={adding}
-                            className="w-full h-12 bg-orange-500 hover:bg-orange-600 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2"
+                            className="bg-primary text-black w-full h-16 rounded-2xl font-black transition-all flex items-center justify-center gap-3 shadow-xl shadow-primary/20 active:scale-95 disabled:opacity-50"
                         >
-                            {adding ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Add Item'}
+                            {adding ? <Loader2 className="animate-spin" size={20} /> : <>{t.addItem} <Plus size={20} /></>}
                         </button>
                     </form>
                 </motion.div>
             </div>
 
-            {/* List */}
-            <div className="lg:col-span-2 space-y-4">
-                <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm font-bold text-muted-foreground">{menuItems.length} Items Total</p>
+            {/* RIGHT: Items List */}
+            <div className="lg:col-span-7 xl:col-span-8 space-y-6">
+                <div className="flex items-center justify-between mb-4 sticky top-24 z-10 bg-background/50 backdrop-blur-sm py-2 px-2 rounded-xl">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{menuItems.length} {t.totalItems}</p>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                      <span className="text-[10px] font-black uppercase text-primary">{t.liveDatabase}</span>
+                    </div>
                 </div>
-                {loading ? (
-                    [1,2,3].map(i => <div key={i} className="h-24 bg-white/5 animate-pulse rounded-2xl" />)
-                ) : menuItems.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-4">
-                        <AnimatePresence>
-                            {menuItems.map((item) => (
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <AnimatePresence mode="popLayout">
+                        {loading ? (
+                             [1,2,3,4].map(i => (
+                              <div key={i} className="h-44 bg-white/5 animate-pulse rounded-[2.5rem] border border-white/5" />
+                             ))
+                        ) : menuItems.length > 0 ? (
+                            menuItems.map((item) => (
                                 <motion.div 
                                     key={item.id}
                                     layout
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.95 }}
-                                    className="glass p-6 rounded-2xl flex items-center justify-between group"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.9 }}
+                                    className="glass p-6 rounded-[2.5rem] flex flex-col gap-5 group relative overflow-hidden border border-white/5 hover:border-primary/30 transition-all shadow-xl"
                                 >
-                                    <div className="space-y-1">
-                                        <h3 className="text-lg font-bold">{item.name}</h3>
-                                        <p className="text-sm text-muted-foreground line-clamp-1">{item.description || 'No description'}</p>
-                                        <p className="text-xs font-bold text-orange-500">${item.price}</p>
+                                    <div className="flex gap-5">
+                                        <div className="w-24 h-24 rounded-3xl bg-zinc-900 border border-white/10 shadow-inner group-hover:scale-105 transition-transform duration-500 overflow-hidden flex-shrink-0">
+                                            {item.image ? (
+                                              <img src={getImageUrl(item) || ''} alt={item.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                              <div className="w-full h-full flex items-center justify-center text-white/5">
+                                                <Utensils size={40} />
+                                              </div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 space-y-1.5 pt-1">
+                                            <h3 className="text-xl font-black italic tracking-tighter leading-tight line-clamp-1">{item.name}</h3>
+                                            <p className="text-[10px] text-muted-foreground line-clamp-2 leading-relaxed font-semibold uppercase tracking-tight">{item.description || 'No description provided'}</p>
+                                            <div className="mt-auto pt-2">
+                                              <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-black italic">
+                                                {formatIDR(item.price)}
+                                              </span>
+                                            </div>
+                                        </div>
                                     </div>
+
                                     <button 
                                         onClick={() => handleDelete(item.id)}
-                                        className="p-3 rounded-xl bg-red-500/10 text-red-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white"
+                                        className="absolute top-4 right-4 p-3 rounded-2xl bg-red-500/10 text-red-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white z-10 shadow-lg"
                                     >
-                                        <Trash2 size={18} />
+                                        <Trash2 size={16} />
                                     </button>
+
+                                    <div className="absolute -bottom-8 -right-8 text-white/5 group-hover:text-primary/5 transition-all duration-700 pointer-events-none rotate-12">
+                                        <Utensils size={140} />
+                                    </div>
                                 </motion.div>
-                            ))}
-                        </AnimatePresence>
-                    </div>
-                ) : (
-                    <div className="text-center py-20 glass rounded-3xl border-dashed">
-                        <Utensils size={48} className="mx-auto text-muted-foreground/30 mb-4" />
-                        <p className="text-muted-foreground italic">No menu items found. Add your first dish!</p>
-                    </div>
-                )}
+                            ))
+                        ) : (
+                            <div className="col-span-full py-32 glass rounded-[4rem] border-dashed border-white/10 flex flex-col items-center justify-center text-center">
+                                <ChefHat size={64} className="text-white/5 mb-6" />
+                                <p className="text-muted-foreground italic font-medium">{t.noMenu}</p>
+                                <p className="text-[10px] text-muted-foreground/50 uppercase tracking-widest mt-2">D'MBG Kitchen is currently empty</p>
+                            </div>
+                        )}
+                    </AnimatePresence>
+                </div>
             </div>
         </div>
     </div>

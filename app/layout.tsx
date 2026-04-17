@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Navbar, Footer } from "@/components/Layout";
+import { Navbar } from "@/components/Layout";
+import { LanguageProvider } from "@/lib/utils";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,8 +15,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CateringGo | Simple Catering Solutions",
-  description: "Order your delicious catering meals with ease.",
+  title: "D'MBG | Dapur Kesayangan Anak MSID",
+  description: "Deni MBG: Layanan katering spesial untuk anak MSID.",
+  icons: {
+    icon: "/dmbg_favicon.png", 
+  }
 };
 
 export default function RootLayout({
@@ -24,16 +28,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
-    >
-      <body className="min-h-full flex flex-col gradient-bg">
-        <Navbar />
-        <main className="flex-1 pt-16">
-          {children}
-        </main>
-        <Footer />
+    <html lang="id" className="dark">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}>
+        <LanguageProvider>
+          <Navbar />
+          <main className="pb-20">
+            {children}
+          </main>
+        </LanguageProvider>
       </body>
     </html>
   );

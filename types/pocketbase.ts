@@ -2,7 +2,8 @@ export interface MenuItem {
   id: string;
   name: string;
   description: string;
-  price: number;
+  price: number; // Reverted back to price
+  image?: string; // Added image field
   created: string;
   updated: string;
 }
@@ -21,10 +22,10 @@ export interface CalendarItem {
 export interface OrderItem {
   id: string;
   buyer_name: string;
-  calendar_item: string;
-  quantity: number;
+  calendar_id: string;
+  notes?: string; 
   expand?: {
-    calendar_item?: CalendarItem & {
+    calendar_id?: CalendarItem & {
       expand?: {
         menu_item?: MenuItem;
       }
@@ -32,11 +33,4 @@ export interface OrderItem {
   };
   created: string;
   updated: string;
-}
-
-export interface ApiResponse<T> {
-  items: T[];
-  totalItems: number;
-  totalPages: number;
-  page: number;
 }
