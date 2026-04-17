@@ -101,16 +101,15 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <h2 className="text-2xl font-bold italic tracking-tight">
-                  Orders
+                  {t.orders}
                 </h2>
                 <p className="text-muted-foreground text-sm mt-2 leading-relaxed">
-                  Manage {stats.futureOrders} active orders and verify payment
-                  proofs.
+                  {t.manageOrders}
                 </p>
               </div>
             </div>
             <div className="pt-6 flex items-center gap-2 text-primary font-bold text-sm">
-              View Orders <ChevronRight size={16} />
+              {t.viewOrders} <ChevronRight size={16} />
             </div>
           </motion.div>
         </Link>

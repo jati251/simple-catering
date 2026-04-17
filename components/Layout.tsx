@@ -99,7 +99,7 @@ export function Navbar() {
                 onClick={() => setMobileOpen(false)}
                 className="block text-xl font-bold text-primary"
             >
-                Admin Portal
+                {t.adminPortal}
             </Link>
         </div>
       )}

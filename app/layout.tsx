@@ -22,6 +22,8 @@ export const metadata: Metadata = {
   }
 };
 
+import { ToastProvider } from "@/components/UI/Toast";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -31,10 +33,12 @@ export default function RootLayout({
     <html lang="id" className="dark">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}>
         <LanguageProvider>
-          <Navbar />
-          <main className="pb-20">
-            {children}
-          </main>
+          <ToastProvider>
+            <Navbar />
+            <main className="pb-20">
+              {children}
+            </main>
+          </ToastProvider>
         </LanguageProvider>
       </body>
     </html>
