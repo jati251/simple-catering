@@ -75,13 +75,9 @@ export const getTomorrowMenu = async (): Promise<CalendarItem[]> => {
 };
 
 export const createOrder = async (
-  userName: string,
-  calendarId: string,
+  formData: FormData,
 ): Promise<OrderItem> => {
-  return await pb.collection("orders").create<OrderItem>({
-    buyer_name: userName,
-    calendar_id: calendarId,
-  });
+  return await pb.collection("orders").create<OrderItem>(formData);
 };
 
 export const getTomorrowOrders = async (): Promise<OrderItem[]> => {

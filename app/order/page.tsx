@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { pb, createOrder, getImageUrl } from "@/lib/pb";
+import { pb, createOrder } from "@/lib/pb";
 import { CalendarItem } from "@/types/pocketbase";
-import { motion, AnimatePresence } from "framer-motion";
+
 import {
   Calendar as CalendarIcon,
   User,
@@ -11,10 +11,10 @@ import {
   ShoppingBag,
   ArrowRight,
   Loader2,
-  Utensils,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTranslation, formatIDR, getWIBDateString } from "@/lib/utils";
+import { useTranslation, getWIBDateString } from "@/lib/utils";
+import Image from "next/image";
 
 export default function OrderPage() {
   const { t } = useTranslation();
@@ -26,6 +26,9 @@ export default function OrderPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+
+  const [paymentProof, setPaymentProof] = useState<File | null>(null);
+  const [proofPreview, setProofPreview] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchDates() {
@@ -49,14 +52,28 @@ export default function OrderPage() {
     fetchDates();
   }, []);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPaymentProof(file);
+      const url = URL.createObjectURL(file);
+      setProofPreview(url);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedDateId || !buyerName) return;
+    if (!selectedDateId || !buyerName || !paymentProof) return;
 
     setSubmitting(true);
     setStatus("idle");
     try {
-      await createOrder(buyerName, selectedDateId);
+      const formData = new FormData();
+      formData.append("buyer_name", buyerName);
+      formData.append("calendar_id", selectedDateId);
+      formData.append("payment_proof", paymentProof);
+
+      await createOrder(formData);
       setStatus("success");
       setTimeout(() => router.push("/"), 2000);
     } catch (err) {
@@ -67,10 +84,8 @@ export default function OrderPage() {
     }
   };
 
-  const selectedDate = availableDates.find((d) => d.id === selectedDateId);
-
   return (
-    <div className="max-w-4xl mx-auto px-6 py-16 space-y-12">
+    <div className="max-w-6xl mx-auto px-6 py-16 space-y-12">
       <div className="text-center space-y-4">
         <h1 className="text-5xl md:text-7xl font-black italic tracking-tighter leading-none">
           {t.placeOrder}
@@ -82,11 +97,11 @@ export default function OrderPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="grid grid-cols-1 md:grid-cols-12 gap-8"
+        className="grid grid-cols-1 lg:grid-cols-12 gap-12"
       >
-        {/* Input Side */}
-        <div className="md:col-span-12 lg:col-span-7 space-y-8">
-          <div className="glass p-10 rounded-[2.5rem] space-y-10 shadow-2xl border border-white/5">
+        {/* Selection & Name */}
+        <div className="lg:col-span-4 space-y-8">
+          <div className="glass p-8 rounded-[2.5rem] space-y-8 border border-white/5 shadow-2xl">
             <div className="space-y-4">
               <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1 flex items-center gap-2">
                 <User size={14} className="text-primary" /> {t.yourName}
@@ -95,7 +110,7 @@ export default function OrderPage() {
                 type="text"
                 required
                 placeholder="e.g. Deni Sumargo"
-                className="w-full h-16 bg-white/5 border border-white/10 rounded-2xl px-6 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-black italic text-lg"
+                className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-6 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-black italic text-lg"
                 value={buyerName}
                 onChange={(e) => setBuyerName(e.target.value)}
               />
@@ -106,9 +121,9 @@ export default function OrderPage() {
                 <CalendarIcon size={14} className="text-primary" />{" "}
                 {t.chooseDate}
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="grid grid-cols-1 gap-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                 {loading ? (
-                  [1, 2, 3, 4].map((i) => (
+                  [1, 2, 3].map((i) => (
                     <div
                       key={i}
                       className="h-20 bg-white/5 animate-pulse rounded-2xl"
@@ -130,50 +145,131 @@ export default function OrderPage() {
                       >
                         <div className="relative z-10 w-full pr-1">
                           <p
-                            className={`text-xs font-black uppercase tracking-widest leading-none mb-1 ${isSelected ? "text-black/80" : "text-muted-foreground"}`}
+                            className={`text-[10px] font-black uppercase tracking-widest leading-none mb-1 ${isSelected ? "text-black/80" : "text-muted-foreground"}`}
                           >
                             {new Date(item.date).toLocaleDateString(undefined, {
                               weekday: "short",
-                            })}
-                          </p>
-                          <p className="text-lg font-black leading-tight mb-1">
-                            {new Date(item.date).toLocaleDateString(undefined, {
                               month: "short",
                               day: "numeric",
                             })}
                           </p>
-                          <p
-                            className={`text-[10px] font-black italic truncate ${isSelected ? "text-black" : "text-primary"}`}
-                          >
+                          <p className="text-sm font-black leading-tight truncate">
                             {item.expand?.menu_item?.name}
                           </p>
                         </div>
                         {isSelected && (
-                          <CheckCircle2
-                            size={24}
-                            className="relative z-10 hidden sm:block"
-                          />
+                          <CheckCircle2 size={20} className="relative z-10" />
                         )}
                       </button>
                     );
                   })
                 ) : (
-                  <div className="col-span-full py-10 text-center text-muted-foreground italic text-sm">
+                  <div className="py-10 text-center text-muted-foreground italic text-sm">
                     {t.noMenu}
                   </div>
                 )}
               </div>
             </div>
+          </div>
+        </div>
 
-            <div className="pt-6 border-t border-white/5">
+        {/* Payment Section */}
+        <div className="lg:col-span-8 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* QRIS Card */}
+            <div className="glass p-8 rounded-[3rem] border border-white/5 space-y-6 flex flex-col items-center">
+              <div className="text-center space-y-2">
+                <h3 className="text-xl font-black italic tracking-tight">
+                  Payment via QRIS
+                </h3>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                  Scan using any payment app
+                </p>
+              </div>
+
+              <div className="relative p-4 bg-white rounded-3xl shadow-2xl flex items-center justify-center group overflow-hidden">
+                <Image
+                  src="/qris.jpeg"
+                  alt="QRIS Payment"
+                  width={400}
+                  height={500}
+                  className="w-full max-w-[500px] aspect-square object-contain"
+                />
+                <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <span className="bg-black text-white px-4 py-2 rounded-full text-[10px] font-black italic">
+                    SAVE IMAGE
+                  </span>
+                </div>
+              </div>
+
+              <div className="w-full pt-4 border-t border-white/5 flex items-center justify-between px-2">
+                <span className="text-[10px] font-black text-primary uppercase">
+                  D'MBG Kitchen
+                </span>
+                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest italic">
+                  Instant Approval
+                </span>
+              </div>
+            </div>
+
+            {/* Upload Proof Card */}
+            <div className="glass p-8 rounded-[3rem] border border-white/5 space-y-6 flex flex-col">
+              <div className="space-y-2">
+                <h3 className="text-xl font-black italic tracking-tight">
+                  Upload Proof
+                </h3>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest italic">
+                  Capture and upload receipt
+                </p>
+              </div>
+
+              <div className="flex-1 min-h-[220px] relative">
+                <input
+                  type="file"
+                  accept="image/*"
+                  required
+                  onChange={handleFileChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                />
+                <div
+                  className={`absolute inset-0 rounded-3xl border-2 border-dashed transition-all flex flex-col items-center justify-center p-6 text-center ${proofPreview ? "border-primary bg-primary/5" : "border-white/10 bg-white/5 hover:border-primary/30"}`}
+                >
+                  {proofPreview ? (
+                    <div className="relative w-full h-full">
+                      <img
+                        src={proofPreview}
+                        alt="Preview"
+                        className="w-full h-full object-cover rounded-2xl"
+                      />
+                      <div className="absolute bottom-2 right-2 px-3 py-1 bg-black/80 rounded-full text-[8px] font-black text-primary uppercase">
+                        Replace Image
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4 text-primary">
+                        <ShoppingBag size={24} />
+                      </div>
+                      <p className="text-xs font-black italic leading-tight mb-1">
+                        Drop Receipt Here
+                      </p>
+                      <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-tighter">
+                        JPEG, PNG Max 5MB
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+
               <button
                 disabled={
                   submitting ||
                   !selectedDateId ||
                   !buyerName ||
+                  !paymentProof ||
                   status === "success"
                 }
-                className="w-full h-20 bg-primary hover:bg-opacity-90 disabled:opacity-50 text-black rounded-[1.5rem] font-black text-2xl shadow-xl shadow-primary/20 transition-all flex items-center justify-center gap-3 group italic tracking-tight"
+                className="w-full h-16 bg-primary hover:bg-opacity-90 disabled:opacity-50 text-black rounded-[1.5rem] font-black text-xl shadow-xl shadow-primary/20 transition-all flex items-center justify-center gap-3 group italic tracking-tight"
               >
                 {submitting ? (
                   <Loader2 className="animate-spin" />
@@ -183,84 +279,20 @@ export default function OrderPage() {
                   <>
                     {t.confirmOrder}{" "}
                     <ArrowRight
-                      size={24}
+                      size={20}
                       className="group-hover:translate-x-1 transition-transform"
                     />
                   </>
                 )}
               </button>
-              {status === "error" && (
-                <p className="text-red-500 text-center text-[10px] font-black uppercase mt-4">
-                  Order failed. Please try again.
-                </p>
-              )}
             </div>
           </div>
-        </div>
 
-        {/* Preview Card */}
-        <div className="hidden lg:block lg:col-span-12 xl:col-span-5">
-          <AnimatePresence mode="wait">
-            {selectedDate && selectedDate.expand?.menu_item ? (
-              <motion.div
-                key={selectedDate.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="glass p-8 rounded-[3rem] sticky top-24 border border-white/5 overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 p-8 opacity-5">
-                  <ShoppingBag size={120} />
-                </div>
-
-                <div className="relative z-10 space-y-6">
-                  <div className="h-64 w-full rounded-[2rem] overflow-hidden bg-zinc-900 border border-white/10 shadow-2xl">
-                    {selectedDate.expand.menu_item.image ? (
-                      <img
-                        src={getImageUrl(selectedDate.expand.menu_item) || ""}
-                        alt={selectedDate.expand.menu_item.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-white/5">
-                        <Utensils size={64} />
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <h2 className="text-3xl font-black italic tracking-tighter leading-none">
-                      {selectedDate.expand.menu_item.name}
-                    </h2>
-                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">
-                      {t.tomorrowMenu}
-                    </p>
-                  </div>
-
-                  <p className="text-sm font-medium text-muted-foreground leading-relaxed">
-                    {selectedDate.expand.menu_item.description ||
-                      "Savor the unique flavors prepared specially by D'MBG kitchen."}
-                  </p>
-
-                  <div className="pt-4 border-t border-white/5 flex items-center justify-between">
-                    <span className="text-4xl font-black italic text-primary">
-                      {formatIDR(selectedDate.expand.menu_item.price)}
-                    </span>
-                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[8px] font-black uppercase">
-                      Kitchen Ready
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ) : (
-              <div className="glass p-8 rounded-[3rem] sticky top-24 border border-dashed border-white/10 h-96 flex flex-col items-center justify-center text-center opacity-50 grayscale">
-                <ShoppingBag size={64} className="mb-4 text-white/10" />
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                  {t.selectDate}
-                </p>
-              </div>
-            )}
-          </AnimatePresence>
+          {status === "error" && (
+            <p className="text-red-500 text-center text-[10px] font-black uppercase mt-4">
+              Something went wrong. Please check your connection.
+            </p>
+          )}
         </div>
       </form>
     </div>

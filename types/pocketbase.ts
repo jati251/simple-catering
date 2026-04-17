@@ -23,7 +23,8 @@ export interface OrderItem {
   id: string;
   buyer_name: string;
   calendar_id: string;
-  notes?: string; 
+  notes?: string;
+  payment_proof?: string; 
   expand?: {
     calendar_id?: CalendarItem & {
       expand?: {
