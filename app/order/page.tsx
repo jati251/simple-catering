@@ -94,16 +94,21 @@ export default function OrderPage() {
           {t.placeOrder}
         </h1>
         <div className="flex items-center justify-center gap-4 py-2">
-           <div className={`p-1 px-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${step === 1 ? 'bg-primary text-black' : 'bg-white/5 text-muted-foreground'}`}>01. Details</div>
-           <div className="w-8 h-px bg-white/10" />
-           <div className={`p-1 px-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${step === 2 ? 'bg-primary text-black' : 'bg-white/5 text-muted-foreground'}`}>02. Payment</div>
+          <div
+            className={`p-1 px-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${step === 1 ? "bg-primary text-black" : "bg-white/5 text-muted-foreground"}`}
+          >
+            01. Details
+          </div>
+          <div className="w-8 h-px bg-white/10" />
+          <div
+            className={`p-1 px-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${step === 2 ? "bg-primary text-black" : "bg-white/5 text-muted-foreground"}`}
+          >
+            02. Payment
+          </div>
         </div>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="max-w-2xl mx-auto w-full"
-      >
+      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto w-full">
         {step === 1 && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
             {/* Selection & Name */}
@@ -153,11 +158,14 @@ export default function OrderPage() {
                             <p
                               className={`text-[9px] font-black uppercase tracking-widest leading-none mb-1 ${isSelected ? "text-black/80" : "text-muted-foreground"}`}
                             >
-                              {new Date(item.date).toLocaleDateString(undefined, {
-                                weekday: "short",
-                                month: "short",
-                                day: "numeric",
-                              })}
+                              {new Date(item.date).toLocaleDateString(
+                                undefined,
+                                {
+                                  weekday: "short",
+                                  month: "short",
+                                  day: "numeric",
+                                },
+                              )}
                             </p>
                             <p className="text-[11px] font-black leading-tight uppercase transition-colors">
                               {item.expand?.menu_item?.name}
@@ -179,12 +187,13 @@ export default function OrderPage() {
             </div>
 
             <button
-               type="button"
-               disabled={!isStep1Valid}
-               onClick={() => setStep(2)}
-               className="w-full h-16 bg-primary hover:bg-opacity-90 disabled:opacity-30 text-black rounded-2xl font-black text-xl shadow-xl shadow-primary/20 transition-all flex items-center justify-center gap-3 italic group"
+              type="button"
+              disabled={!isStep1Valid}
+              onClick={() => setStep(2)}
+              className="w-full h-16 bg-primary hover:bg-opacity-90 disabled:opacity-30 text-black rounded-2xl font-black text-xl shadow-xl shadow-primary/20 transition-all flex items-center justify-center gap-3 italic group"
             >
-               Next to Payment <ArrowRight className="group-hover:translate-x-1 transition-transform" />
+              Next to Payment{" "}
+              <ArrowRight className="group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
         )}
@@ -258,14 +267,18 @@ export default function OrderPage() {
                           alt="Preview"
                           className="max-h-32 rounded-lg object-contain shadow-xl"
                         />
-                        <div className="absolute -bottom-1 -right-1 px-2 py-0.5 bg-primary text-black rounded text-[8px] font-black uppercase">Change</div>
+                        <div className="absolute -bottom-1 -right-1 px-2 py-0.5 bg-primary text-black rounded text-[8px] font-black uppercase">
+                          Change
+                        </div>
                       </div>
                     ) : (
                       <>
                         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-2 text-primary">
                           <ShoppingBag size={20} />
                         </div>
-                        <p className="text-[10px] font-black italic leading-tight uppercase">Drop Image Proof</p>
+                        <p className="text-[10px] font-black italic leading-tight uppercase">
+                          Drop Image Proof
+                        </p>
                       </>
                     )}
                   </div>
@@ -281,9 +294,7 @@ export default function OrderPage() {
                   </button>
                   <button
                     disabled={
-                      submitting ||
-                      !paymentProof ||
-                      status === "success"
+                      submitting || !paymentProof || status === "success"
                     }
                     className="h-14 bg-primary hover:bg-opacity-90 disabled:opacity-30 text-black rounded-xl font-black text-sm uppercase shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 italic"
                   >

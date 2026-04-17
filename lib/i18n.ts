@@ -74,6 +74,7 @@ export const translations = {
     deleteOrder: "Delete Order",
     deleting: "Deleting...",
     successDelete: "Order deleted successfully",
+    cancelText: "Cancel",
   },
   id: {
     heroTitle: "Dapur MBG Deni.",
@@ -148,5 +149,6 @@ export const translations = {
     deleteOrder: "Hapus Pesanan",
     deleting: "Menghapus...",
     successDelete: "Pesanan berhasil dihapus",
+    cancelText: "Batal",
   },
 };
